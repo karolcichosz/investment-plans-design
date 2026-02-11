@@ -1,0 +1,13 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:29092
+    
+    producer:
+      bootstrap-servers: kafka:29092
+
+server:
+  port: 8084
+
+logging:
+  level:
+    com.invest: DEBUG

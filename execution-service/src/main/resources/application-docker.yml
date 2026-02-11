@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: execution-service
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/investment_plans_db
+    username: postgres
+    password: postgres123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: kafka:29092
+    
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+      batch-size: 16384
+      linger-ms: 10
+    
+    consumer:
+      group-id: execution-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      max-poll-records: 500
+      session-timeout-ms: 30000
+
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8082
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+logging:
+  level:
+    root: INFO
+    com.invest: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data: INFO
+    org.hibernate: WARN
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true

@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: cash-domain
+  
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    
+    # Producer Configuration (publishes to cash-events)
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      properties:
+        linger.ms: 10
+        batch.size: 32768
+  
+  # Jackson for JSON processing
+  jackson:
+    default-property-inclusion: non_null
+
+# Server
+server:
+  port: 8084
+  servlet:
+    context-path: /
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.invest: DEBUG
+    org.springframework.web: INFO
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

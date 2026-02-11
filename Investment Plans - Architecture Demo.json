@@ -1,0 +1,181 @@
+{
+  "info": {
+    "_postman_id": "50c20310-26d8-4024-b8e1-f0c2092c888d",
+    "name": "Investment Plans - Event-Driven Architecture",
+    "description": "Complete event-driven microservices demo with Kafka and shared PostgreSQL",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4436900"
+  },
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Plan Service Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Domain Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8084/api/cash/balance/user_123",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8084",
+              "path": [
+                "api",
+                "cash",
+                "balance",
+                "user_123"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Transactions Domain Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/api/transactions/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8083",
+              "path": [
+                "api",
+                "transactions",
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Demo Flow",
+      "item": [
+        {
+          "name": "1. Create Plan - Tech Stocks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "user_123"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tech Stocks Portfolio\",\n  \"executionDay\": 15,\n  \"investments\": [\n    { \"assetId\": \"AAPL\", \"amount\": 100.00 },\n    { \"assetId\": \"AMZN\", \"amount\": 50.00 },\n    { \"assetId\": \"GOOGL\", \"amount\": 50.00 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/v1/plans",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "plans"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Plan Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "user_123"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/plans/{{planId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "plans",
+                "{{planId}}"
+              ]
+            },
+            "description": "Replace {{planId}} with ID from step 1 response"
+          },
+          "response": []
+        },
+        {
+          "name": "3. List All User Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "user_123"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/plans",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "plans"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "planId",
+      "value": "",
+      "type": "string",
+      "description": "Copy planId from 'Create Plan' response"
+    }
+  ]
+}

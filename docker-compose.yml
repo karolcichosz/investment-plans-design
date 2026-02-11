@@ -1,0 +1,210 @@
+services:
+  # ============================================
+  # SHARED INFRASTRUCTURE
+  # ============================================
+
+  # PostgreSQL with initialization script
+  postgres:
+    image: postgres:15-alpine
+    container_name: investment-plans-postgres
+    environment:
+      POSTGRES_DB: investment_plans_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount init script
+      - ./database/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - investment-plans-net
+
+  # Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: investment-plans-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - investment-plans-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: investment-plans-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: kafka-topics --bootstrap-server localhost:9092 --list
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - investment-plans-net
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: investment-plans-kafka-ui
+    depends_on:
+      - kafka
+    ports:
+      - "8888:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - investment-plans-net
+
+  # ============================================
+  # EXTERNAL SERVICES (Mock Domains)
+  # ============================================
+
+  # Cash Domain Service - publishes cash-events on startup
+  cash-domain:
+    build:
+      context: ./cash-domain
+      dockerfile: Dockerfile
+    container_name: investment-plans-cash-domain
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_APPLICATION_NAME: cash-domain
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8084
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - investment-plans-net
+
+  # Transactions Domain Service - consumes order-commands, publishes order-filled
+  transactions-domain:
+    build:
+      context: ./transactions-domain
+      dockerfile: Dockerfile
+    container_name: investment-plans-transactions-domain
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_APPLICATION_NAME: transactions-domain
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8083
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - investment-plans-net
+
+  # ============================================
+  # OUR CORE SERVICES (Shared Database)
+  # ============================================
+
+  # Plan API Service
+  plan-service:
+    build:
+      context: ./plan-service
+      dockerfile: Dockerfile
+    container_name: investment-plans-plan-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: plan-service
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investment_plans_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      LOGGING_LEVEL_COM_INVEST: DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/plans/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - investment-plans-net
+
+  # Relay Service - polls outbox every 30 seconds
+  relay-service:
+    build:
+      context: ./relay-service
+      dockerfile: Dockerfile
+    container_name: investment-plans-relay-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: relay-service
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8081
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investment_plans_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      LOGGING_LEVEL_COM_INVEST: DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - investment-plans-net
+
+  # Execution Service - listens to Kafka and processes
+  execution-service:
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile
+    container_name: investment-plans-execution-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_APPLICATION_NAME: execution-service
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8082
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/investment_plans_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres123
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      LOGGING_LEVEL_COM_INVEST: DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - investment-plans-net
+
+volumes:
+  postgres_data:
+
+networks:
+  investment-plans-net:
+    driver: bridge

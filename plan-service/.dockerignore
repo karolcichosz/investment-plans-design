@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+*~
+
+# Build
+target/
+build/
+.gradle/
+*.class
+*.jar
+!target/*.jar
+
+# Package managers
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+.env
+
+# Logs
+*.log
+logs/
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+
+# Tests
+src/test/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Misc
+.dockerignore
+docker-compose.yml
+.github/
+.gitlab-ci.yml
+.travis.yml
