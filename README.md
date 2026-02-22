@@ -73,7 +73,7 @@ This approach ensures:
 ### Document Structure
 
 | Section                         | Content                                                        |
-| ------------------------------- | -------------------------------------------------------------- |
+|---------------------------------|----------------------------------------------------------------|
 | §2 Architecture Overview        | Components, data flow, sequence diagrams                       |
 | §3 Key Design Decisions         | What we chose, what we rejected, and why                       |
 | §4 Trade-offs                   | What we're optimizing for vs. sacrificing                      |
@@ -82,6 +82,7 @@ This approach ensures:
 | §7 Non-Functional Requirements  | Scalability, reliability, observability targets                |
 | §8 MVP Scope & Post-MVP         | Phased delivery approach                                       |
 | §9 Delivery Plan                | Development, testing, and rollout strategy                     |
+| §10 Proof of concept            | Concept implementation (docker-compose, Java 21)               |
 | Appendices A-F                  | Code, SLOs, scalability, fallbacks, design rationale, AI usage |
 
 ---
@@ -1119,6 +1120,22 @@ style P4 fill:#FFFDE7,stroke:#F9A825,stroke-width:1.5px,color:#000
 > - Clear dependency management
 > - Regular progress updates
 > - Scope adjustment if timeline pressure requires it
+
+## 10. Proof of concept
+
+### Prerequisites
+
+You have to have `docker` and `mvn Java 21` installed.
+
+### How to start
+
+In order to build and run all containers (3 services, mocks of currently existing domains, Kafka & PostgreSQL) simply run:
+
+> docker-compose up
+
+### How to trigger the flow
+
+Import `Investment Plans - Architecture Demo.json` to Postman and use its API.
 
 ---
 

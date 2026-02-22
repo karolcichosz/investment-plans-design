@@ -18,7 +18,6 @@ public class OutboxPollingRelay {
     private final OutboxRepository outboxRepository;
     private final OutboxPublisher outboxPublisher;
 
-    public static final String EXECUTE_PLAN_EVENT_TYPE = "ExecutePlan";
 
     /**
      * Polls the outbox table for ready, unpublished events and delegates publishing
@@ -32,7 +31,7 @@ public class OutboxPollingRelay {
 
         List<OutboxRecord> pendingEvents = outboxRepository
                 .findByPublishedFalseAndEventTypeAndScheduledForLessThanEqualOrderByCreatedAtAsc(
-                        EXECUTE_PLAN_EVENT_TYPE,
+                        EventType.EXECUTE_PLAN.getValue(),
                         now
                 );
 
@@ -61,9 +60,9 @@ public class OutboxPollingRelay {
     @Scheduled(fixedDelay = 60000)
     public void checkRelayHealth() {
         long unpublishedCount = outboxRepository
-                .countByPublishedFalseAndEventType(EXECUTE_PLAN_EVENT_TYPE);
+                .countByPublishedFalseAndEventType(EventType.EXECUTE_PLAN.getValue());
         log.info("Relay Health: {} unpublished '{}' events in outbox",
-                unpublishedCount, EXECUTE_PLAN_EVENT_TYPE);
+                unpublishedCount, EventType.EXECUTE_PLAN.getValue());
     }
 
     // Inner class moved here so it can be used by both OutboxPublisher and this class

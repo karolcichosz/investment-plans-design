@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static com.invest.relay.domain.OutboxPollingRelay.EXECUTE_PLAN_EVENT_TYPE;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -53,12 +51,6 @@ class OutboxPublisher {
     }
 
     private String getTopic(String eventType) {
-        return switch (eventType) {
-            case "PlanCreated" -> "plan-events";
-            case EXECUTE_PLAN_EVENT_TYPE -> "plan-commands";
-            case "CashBalanceUpdated" -> "cash-events";
-            case "OrderFilled" -> "order-filled";
-            default -> "events";
-        };
+        return EventType.fromValue(eventType).getTopic();
     }
 }
